@@ -75,7 +75,10 @@ function forecast(market: CaseMarket): number {
     throw new Error(`market ${market.id}'s last price is not a finite number`);
   }
   const windowStart = Math.max(0, prices.length - WINDOW_MINUTES);
-  const recentMean = average(prices.slice(windowStart));
+  // Ignore non-finite ticks inside the window: one bad tick should not kill
+  // the whole forecast. If every tick is bad, fall back to the last price.
+  const window = prices.slice(windowStart).filter((p) => Number.isFinite(p));
+  const recentMean = window.length > 0 ? average(window) : last;
   if (!Number.isFinite(recentMean)) {
     throw new Error(`market ${market.id}'s recent mean is not finite`);
   }
